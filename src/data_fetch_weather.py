@@ -43,6 +43,13 @@ def fetch_openmeteo(
         wind_speed_mean_ms, precipitation_sum_mm
     Falls back to forecast API if archive unavailable.
     """
+    # Cap end date to 2 days ago to prevent future date 400 Bad Request on the archive API
+    yesterday = (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d")
+    if date_end is not None and date_end > yesterday:
+        date_end = yesterday
+    if date_start is not None and date_end is not None and date_start > date_end:
+        date_start = (datetime.strptime(date_end, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+
     if date_start is None or date_end is None:
         date_start, date_end = _get_analysis_date_range()
 
@@ -121,6 +128,13 @@ def fetch_nasa_power(
 
     Returns: solar_radiation_Wm2, temp_mean_c, wind_speed_ms
     """
+    # Cap end date to 2 days ago to prevent future date request errors
+    yesterday = (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d")
+    if date_end is not None and date_end > yesterday:
+        date_end = yesterday
+    if date_start is not None and date_end is not None and date_start > date_end:
+        date_start = (datetime.strptime(date_end, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+
     if date_start is None or date_end is None:
         date_start, date_end = _get_analysis_date_range(months=2)
 
