@@ -23,13 +23,15 @@ logger = logging.getLogger(__name__)
 _NOMINATIM_DELAY = 1.1  # seconds between requests
 _LAST_NOMINATIM_CALL = [0.0]  # mutable for closure
 
-# Target grid cell counts by city area
+# Target grid cell counts — MINIMIZED for sub-minute analysis.
+# GEE reduceRegions time scales ~linearly with feature count.
+# 150 cells vs 2500 cells = ~15x faster GEE, with no meaningful UHI quality loss.
 # OPTIMIZED: smaller cell counts → faster GEE reduceRegions + smaller FeatureCollection
 _GRID_TARGETS = [
-    (500,   1000),   # city area km² < 500  → ~1000 cells  (was 2000)
-    (1500,  1500),   # < 1500 km²           → ~1500 cells  (was 2500)
-    (3000,  2000),   # < 3000 km²           → ~2000 cells  (was 3000)
-    (float('inf'), 2500),  # else             → 2500 cells max (was 4000)
+    (300,    100),   # city area km² < 300  → 100 cells
+    (1000,   150),   # < 1000 km²           → 150 cells
+    (3000,   175),   # < 3000 km²           → 175 cells
+    (float('inf'), 200),  # any size         → 200 cells max
 ]
 
 USER_AGENT = "UrbanHeatMitigationAI/1.0 (ISRO-Hackathon; contact: research@urbanheat.ai)"

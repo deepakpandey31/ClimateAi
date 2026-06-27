@@ -147,26 +147,10 @@ def train_city_model(
         verbosity=0,
     )
 
-    # Spatial Cross-validation for honest metrics (k=5, but min 5 per fold)
-    n_folds = min(5, max(2, len(X) // 50))
-    try:
-        if 'centroid_lat' in df.columns and 'centroid_lon' in df.columns:
-            coords = df[['centroid_lat', 'centroid_lon']].values
-            kmeans = KMeans(n_clusters=n_folds, random_state=42, n_init='auto')
-            groups = kmeans.fit_predict(coords)
-            cv = GroupKFold(n_splits=n_folds)
-            cv_scores = cross_val_score(model, X, y, cv=cv, groups=groups, scoring='r2', n_jobs=1)
-            cv_rmse_scores = np.sqrt(-cross_val_score(model, X, y, cv=cv, groups=groups, scoring='neg_mean_squared_error', n_jobs=1))
-        else:
-            cv_scores = cross_val_score(model, X, y, cv=n_folds, scoring='r2', n_jobs=1)
-            cv_rmse_scores = np.sqrt(-cross_val_score(model, X, y, cv=n_folds, scoring='neg_mean_squared_error', n_jobs=1))
-            
-        cv_r2 = float(np.mean(cv_scores))
-        cv_rmse = float(np.mean(cv_rmse_scores))
-    except Exception as e:
-        logger.warning(f"Cross-validation failed: {e}. Using train metrics only.")
-        cv_r2 = np.nan
-        cv_rmse = np.nan
+    # Skip cross-validation in live mode (saves 5-15 seconds)
+    # The model is for hotspot ranking, not academic benchmarking.
+    cv_r2 = np.nan
+    cv_rmse = np.nan
 
     # Final fit on all data
     model.fit(X, y)

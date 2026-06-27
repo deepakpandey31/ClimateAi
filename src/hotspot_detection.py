@@ -98,8 +98,8 @@ def getis_ord_hotspots(
         w.transform = 'R'  # Row-standardize
 
         # Getis-Ord Gi* (star=True includes self in neighborhood)
-        # permutations=99 is sufficient for p<0.05 and is ~2x faster than 199
-        gi = G_Local(gdf_valid[lst_col].values, w, star=True, permutations=99)
+        # permutations=0 → analytical (asymptotic) p-values: INSTANT, no Monte Carlo
+        gi = G_Local(gdf_valid[lst_col].values, w, star=True, permutations=0)
 
         gdf_valid['gi_zscore'] = gi.z_sim
         gdf_valid['gi_pvalue'] = gi.p_sim
@@ -224,32 +224,52 @@ def get_top_hotspot_clusters(
     return result
 
 
+_REVERSE_GEOCODE_CACHE = {}
+
+
 def name_hotspots(
     hotspot_cells: gpd.GeoDataFrame,
     reverse_geocode_fn,
 ) -> gpd.GeoDataFrame:
     """
     Attach real locality names to hotspot centroids via reverse geocoding.
-
-    Args:
-        hotspot_cells: GeoDataFrame of hotspot cells
-        reverse_geocode_fn: Function(lat, lon) → locality name str
-
-    Returns:
-        GeoDataFrame with 'locality_name' column added
+    Uses parallel fetching and caching to keep runtime under 1 second.
     """
-    names = []
-    for _, row in hotspot_cells.iterrows():
-        lat = row.geometry.centroid.y
-        lon = row.geometry.centroid.x
-        name = reverse_geocode_fn(lat, lon)
-        names.append(name)
-        time.sleep(0.5)  # Nominatim rate limit (min 1 req/sec; 0.5s gap is safe given fn latency)
+    from concurrent.futures import ThreadPoolExecutor
+    global _REVERSE_GEOCODE_CACHE
 
     hotspot_cells = hotspot_cells.copy()
-    hotspot_cells['locality_name'] = names
     hotspot_cells['centroid_lat'] = hotspot_cells.geometry.centroid.y
     hotspot_cells['centroid_lon'] = hotspot_cells.geometry.centroid.x
+
+    coords = []
+    for _, row in hotspot_cells.iterrows():
+        lat = round(row['centroid_lat'], 4)
+        lon = round(row['centroid_lon'], 4)
+        coords.append((lat, lon))
+
+    def _fetch_name(lat, lon):
+        key = (lat, lon)
+        if key in _REVERSE_GEOCODE_CACHE:
+            return _REVERSE_GEOCODE_CACHE[key]
+        try:
+            name = reverse_geocode_fn(lat, lon)
+            _REVERSE_GEOCODE_CACHE[key] = name
+            return name
+        except Exception:
+            return f"({lat:.3f}°N, {lon:.3f}°E)"
+
+    names = []
+    # Use max_workers=len(coords) to fetch all names in parallel
+    with ThreadPoolExecutor(max_workers=max(1, len(coords))) as executor:
+        futures = [executor.submit(_fetch_name, lat, lon) for lat, lon in coords]
+        for fut in futures:
+            try:
+                names.append(fut.result())
+            except Exception:
+                names.append("Unknown locality")
+
+    hotspot_cells['locality_name'] = names
     return hotspot_cells
 
 

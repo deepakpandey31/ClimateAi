@@ -50,8 +50,8 @@ def _safe_set_ox(attr, value):
 
 _safe_set_ox('log_console', False)       # removed in osmnx 2.0
 _safe_set_ox('use_cache', False)          # removed in osmnx 2.0
-_safe_set_ox('timeout', 90)               # osmnx 1.x
-_safe_set_ox('requests_timeout', 90)      # osmnx 2.x renamed
+_safe_set_ox('timeout', 5)                # osmnx 1.x (5 seconds max per try)
+_safe_set_ox('requests_timeout', 5)       # osmnx 2.x renamed
 _safe_set_ox('overpass_endpoint', OVERPASS_ENDPOINTS[0])  # 1.x
 _safe_set_ox('overpass_url', OVERPASS_ENDPOINTS[0])       # possible 2.x alias
 
@@ -66,7 +66,7 @@ def _retry_with_mirrors(func, *args, **kwargs):
         except Exception as e:
             logger.warning(f"Overpass endpoint {endpoint} failed: {e}")
             if i < len(OVERPASS_ENDPOINTS) - 1:
-                time.sleep(2)
+                time.sleep(0.5)
     logger.error("All Overpass mirrors failed")
     return None
 

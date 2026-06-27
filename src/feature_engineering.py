@@ -205,21 +205,68 @@ def build_feature_table(
     base['solar_radiation_Wm2'] = weather_dict.get('shortwave_radiation_Wm2',
                                                      weather_dict.get('solar_radiation_Wm2', 250.0))
 
-    # --- Fill missing values with sensible defaults ---
+    # --- Dynamic Estimation for Missing/Empty OSM Features (vectorized, sub-minute fallback) ---
+    b = base['lulc_builtup_frac']
+    g = base['lulc_green_frac']
+    w = base['lulc_water_frac']
+    ba = base['lulc_bare_frac']
+
+    # For any columns not populated by OSM, estimate them using high-quality formulas:
+    if 'building_density' not in base.columns:
+        base['building_density'] = (b * 0.45).clip(0.01, 0.85)
+    else:
+        base['building_density'] = base['building_density'].fillna((b * 0.45).clip(0.01, 0.85))
+        if (base['building_density'] == 0.0).all():
+            base['building_density'] = (b * 0.45).clip(0.01, 0.85)
+
+    if 'building_count' not in base.columns:
+        base['building_count'] = (base['building_density'] * 150).astype(int)
+    else:
+        base['building_count'] = base['building_count'].fillna((base['building_density'] * 150).astype(int))
+        if (base['building_count'] == 0).all():
+            base['building_count'] = (base['building_density'] * 150).astype(int)
+
+    if 'road_density_m_per_km2' not in base.columns:
+        base['road_density_m_per_km2'] = (b * 12000.0).clip(100, 25000)
+    else:
+        base['road_density_m_per_km2'] = base['road_density_m_per_km2'].fillna((b * 12000.0).clip(100, 25000))
+        if (base['road_density_m_per_km2'] == 0.0).all():
+            base['road_density_m_per_km2'] = (b * 12000.0).clip(100, 25000)
+
+    if 'industrial_frac' not in base.columns:
+        base['industrial_frac'] = (b * 0.15).clip(0, 1)
+    else:
+        base['industrial_frac'] = base['industrial_frac'].fillna((b * 0.15).clip(0, 1))
+
+    if 'commercial_frac' not in base.columns:
+        base['commercial_frac'] = (b * 0.10).clip(0, 1)
+    else:
+        base['commercial_frac'] = base['commercial_frac'].fillna((b * 0.10).clip(0, 1))
+
+    if 'residential_frac' not in base.columns:
+        base['residential_frac'] = (b * 0.60).clip(0, 1)
+    else:
+        base['residential_frac'] = base['residential_frac'].fillna((b * 0.60).clip(0, 1))
+
+    if 'park_frac' not in base.columns:
+        base['park_frac'] = (g * 0.40).clip(0, 1)
+    else:
+        base['park_frac'] = base['park_frac'].fillna((g * 0.40).clip(0, 1))
+
+    if 'dist_water_km' not in base.columns:
+        base['dist_water_km'] = np.where(w > 0.01, 0.1, 5.0)
+    else:
+        base['dist_water_km'] = base['dist_water_km'].fillna(np.where(w > 0.01, 0.1, 5.0))
+        if (base['dist_water_km'] == 5.0).all():
+            base['dist_water_km'] = np.where(w > 0.01, 0.1, 5.0)
+
+    # --- Fill remaining missing values with flat defaults ---
     default_fills = {
         'lulc_builtup_frac': 0.3,
         'lulc_green_frac': 0.15,
         'lulc_water_frac': 0.02,
         'lulc_bare_frac': 0.05,
         'ndvi_mean': 0.15,
-        'industrial_frac': 0.0,
-        'commercial_frac': 0.0,
-        'residential_frac': 0.3,
-        'park_frac': 0.05,
-        'building_density': 0.2,
-        'building_count': 0,
-        'road_density_m_per_km2': 1000.0,
-        'dist_water_km': 5.0,
         'pop_density': 500.0,
     }
     for col, default in default_fills.items():
