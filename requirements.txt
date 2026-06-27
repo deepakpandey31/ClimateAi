@@ -1,5 +1,5 @@
-# Urban Heat Mitigation AI — minimal requirements (no geemap, no fiona compile)
-# geemap is only used optionally; all core GEE work uses earthengine-api directly.
+# Urban Heat Mitigation AI — deployment requirements
+# Pinned for Python 3.11 (see runtime.txt) — all packages have pre-built wheels
 
 # --- Web UI ---
 streamlit==1.35.0
@@ -8,9 +8,9 @@ folium==0.16.0
 branca==0.7.2
 plotly==5.22.0
 
-# --- Geo stack (wheel-only, no C compilation) ---
+# --- Geo stack ---
 geopandas==0.14.4
-shapely==2.0.6
+shapely>=2.0.4,<3.0.0
 osmnx==1.9.4
 pyproj==3.6.1
 
