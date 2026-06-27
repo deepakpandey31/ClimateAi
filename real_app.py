@@ -46,7 +46,7 @@ logger = logging.getLogger("urban_heat_app")
 # Page config set in app.py wrapper
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
+CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -140,19 +140,7 @@ div.stProgress > div > div { background: linear-gradient(90deg, #e94560, #0f3460
     box-shadow: 0 6px 20px rgba(233,69,96,0.4);
 }
 </style>
-""", unsafe_allow_html=True)
-
-
-# ── Pipeline State ────────────────────────────────────────────────────────────
-if 'pipeline_state' not in st.session_state:
-    st.session_state.pipeline_state = {
-        'status': 'idle',          # idle | running | done | error
-        'city': None,
-        'progress': 0,
-        'progress_msg': '',
-        'result': None,
-        'error': None,
-    }
+"""
 
 
 def _update_progress(pct: int, msg: str):
@@ -1235,8 +1223,21 @@ def render_tab_report(result):
         st.markdown(md_content)
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
 def main():
+    # Render Custom CSS
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+    # Initialize Pipeline State
+    if 'pipeline_state' not in st.session_state:
+        st.session_state.pipeline_state = {
+            'status': 'idle',          # idle | running | done | error
+            'city': None,
+            'progress': 0,
+            'progress_msg': '',
+            'result': None,
+            'error': None,
+        }
+
     # Sidebar
     city_input, analyze_btn, force_refresh, fetch_osm = render_sidebar()
 
