@@ -231,44 +231,63 @@ _REVERSE_GEOCODE_CACHE = {}
 def name_hotspots(
     hotspot_cells: gpd.GeoDataFrame,
     reverse_geocode_fn,
+    city_name: str = "City",
 ) -> gpd.GeoDataFrame:
     """
     Attach real locality names to hotspot centroids via reverse geocoding.
-    Uses parallel fetching and caching to keep runtime under 1 second.
+    Uses compass direction relative to center for secondary hotspots to save API time.
     """
-    from concurrent.futures import ThreadPoolExecutor
-    global _REVERSE_GEOCODE_CACHE
-
     hotspot_cells = hotspot_cells.copy()
+    if hotspot_cells.empty:
+        return hotspot_cells
+
     hotspot_cells['centroid_lat'] = hotspot_cells.geometry.centroid.y
     hotspot_cells['centroid_lon'] = hotspot_cells.geometry.centroid.x
 
-    coords = []
-    for _, row in hotspot_cells.iterrows():
-        lat = round(row['centroid_lat'], 4)
-        lon = round(row['centroid_lon'], 4)
-        coords.append((lat, lon))
-
-    def _fetch_name(lat, lon):
-        key = (lat, lon)
-        if key in _REVERSE_GEOCODE_CACHE:
-            return _REVERSE_GEOCODE_CACHE[key]
-        try:
-            name = reverse_geocode_fn(lat, lon)
-            _REVERSE_GEOCODE_CACHE[key] = name
-            return name
-        except Exception:
-            return f"({lat:.3f}°N, {lon:.3f}°E)"
+    # Calculate center coordinates as reference
+    center_lat = hotspot_cells['centroid_lat'].mean()
+    center_lon = hotspot_cells['centroid_lon'].mean()
 
     names = []
-    # Use max_workers=len(coords) to fetch all names in parallel
-    with ThreadPoolExecutor(max_workers=max(1, len(coords))) as executor:
-        futures = [executor.submit(_fetch_name, lat, lon) for lat, lon in coords]
-        for fut in futures:
+    for i, (_, row) in enumerate(hotspot_cells.iterrows()):
+        lat = row['centroid_lat']
+        lon = row['centroid_lon']
+
+        # Try to resolve real name for the top 1 hotspot using Nominatim
+        if i == 0:
             try:
-                names.append(fut.result())
+                name = reverse_geocode_fn(lat, lon)
+                names.append(name)
+                continue
             except Exception:
-                names.append("Unknown locality")
+                pass
+
+        # Compass direction fallback for other hotspots or if API fails
+        dx = lon - center_lon
+        dy = lat - center_lat
+        dist = np.sqrt(dx**2 + dy**2)
+
+        if dist < 0.015:
+            names.append(f"Central {city_name}")
+        else:
+            angle = np.degrees(np.arctan2(dy, dx))
+            if -22.5 <= angle < 22.5:
+                direction = "East"
+            elif 22.5 <= angle < 67.5:
+                direction = "North-East"
+            elif 67.5 <= angle < 112.5:
+                direction = "North"
+            elif 112.5 <= angle < 157.5:
+                direction = "North-West"
+            elif angle >= 157.5 or angle < -157.5:
+                direction = "West"
+            elif -157.5 <= angle < -112.5:
+                direction = "South-West"
+            elif -112.5 <= angle < -67.5:
+                direction = "South"
+            else:
+                direction = "South-East"
+            names.append(f"{direction} {city_name}")
 
     hotspot_cells['locality_name'] = names
     return hotspot_cells

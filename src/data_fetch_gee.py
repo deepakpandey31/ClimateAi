@@ -70,6 +70,12 @@ def _init_gee(project_id: str) -> bool:
             _GEE_AVAILABLE = True
             logger.info(f"GEE: service account auth (cloud mode), project={project_id}")
         else:
+            # Check if default user credentials exist before initializing on Linux
+            from pathlib import Path
+            cred_path = Path.home() / ".config" / "earthengine" / "credentials"
+            if not cred_path.exists() and os.name == 'posix':
+                raise FileNotFoundError("Default earthengine credentials not found on cloud server.")
+
             ee.Initialize(project=project_id)
             _GEE_AVAILABLE = True
             logger.info(f"GEE: local user credentials, project={project_id}")

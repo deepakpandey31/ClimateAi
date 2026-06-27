@@ -324,7 +324,7 @@ def run_pipeline(city_name: str, force_refresh: bool = False, fetch_osm: bool = 
         top_hotspots = get_top_hotspot_clusters(hotspot_gdf, n=5)
 
         _update_progress(85, "Reverse-geocoding hotspot locations...")
-        top_hotspots = name_hotspots(top_hotspots, reverse_geocode)
+        top_hotspots = name_hotspots(top_hotspots, reverse_geocode, city_name)
 
         # ── Step 8: Explanations ────────────────────────────────────────────
         _update_progress(88, "Generating 'why is it hot' explanations...")
