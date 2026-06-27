@@ -43,13 +43,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("urban_heat_app")
 
-# ── Streamlit page config ─────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="Urban Heat Mitigation AI",
-    page_icon="🌡️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# Page config set in app.py wrapper
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
