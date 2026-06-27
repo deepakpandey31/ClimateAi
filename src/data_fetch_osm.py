@@ -37,7 +37,7 @@ OVERPASS_ENDPOINTS = [
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ]
 
-USER_AGENT = "UrbanHeatMitigationAI/1.0 (ISRO-Hackathon)"
+USER_AGENT = "UrbanHeatMitigationAI/1.0"
 
 # OSMnx configuration — compatible with both osmnx 1.x and 2.x
 # osmnx 2.0 removed log_console, use_cache, and renamed timeout→requests_timeout

@@ -34,7 +34,7 @@ _GRID_TARGETS = [
     (float('inf'), 200),  # any size         → 200 cells max
 ]
 
-USER_AGENT = "UrbanHeatMitigationAI/1.0 (ISRO-Hackathon; contact: research@urbanheat.ai)"
+USER_AGENT = "UrbanHeatMitigationAI/1.0 (contact: research@urbanheat.ai)"
 
 
 def _rate_limit():

@@ -2,7 +2,7 @@
 app.py — Urban Heat Mitigation AI System
 Streamlit entry point — 6-tab interactive dashboard.
 
-ISRO Hackathon Submission | All data from free public APIs.
+All data from free public APIs.
 Run: streamlit run app.py
 """
 import warnings
@@ -723,7 +723,7 @@ def plot_intervention_comparison(sim_df: pd.DataFrame, locality: str) -> go.Figu
 def render_sidebar():
     with st.sidebar:
         st.markdown("### 🌡️ Urban Heat AI")
-        st.markdown("*ISRO Hackathon Submission*")
+        st.markdown("*Advanced Geospatial Analysis*")
         st.divider()
 
         city_input = st.text_input(
@@ -1245,7 +1245,7 @@ def main():
     st.markdown(f"""
     <div class="hero-header">
         <h1>🌡️ Urban Heat Mitigation AI</h1>
-        <p>Physics-informed geospatial ML system for Indian city heat stress analysis — ISRO Hackathon</p>
+        <p>Physics-informed geospatial ML system for Indian city heat stress analysis and cooling simulation</p>
     </div>""", unsafe_allow_html=True)
 
     state = st.session_state.pipeline_state

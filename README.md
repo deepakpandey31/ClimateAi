@@ -1,6 +1,6 @@
 # Urban Heat Mitigation AI System 🌡️🛰️
 
-An ISRO hackathon submission that identifies urban heat stress hotspots in any Indian city, quantifies drivers using physics-informed ML, and simulates cooling interventions — all from free public APIs, zero hardcoded data.
+A physics-informed geospatial ML system that identifies urban heat stress hotspots in any Indian city, quantifies drivers using ML, and simulates cooling interventions — all from free public APIs, zero hardcoded data.
 
 ---
 
