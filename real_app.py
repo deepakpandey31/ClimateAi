@@ -903,7 +903,7 @@ def render_tab_hotspots(result):
             with c2:
                 fig = plot_shap_bar(exp)
                 if fig.data:
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key=f"shap_chart_{exp['cell_id']}")
 
                 st.markdown(exp.get('explanation_text', ''), unsafe_allow_html=False)
 
@@ -999,7 +999,7 @@ def render_tab_interventions(result):
     st.markdown("### 📊 All Interventions Comparison")
     fig = plot_intervention_comparison(sim_df, selected_locality)
     if fig.data:
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="intervention_comp_chart")
 
     # Intervention map
     st.markdown("### 🗺️ Intervention Map")
@@ -1105,7 +1105,7 @@ def render_tab_optimizer(result):
             height=380,
             xaxis=dict(tickangle=-15),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="optimizer_alloc_chart")
 
 
 def render_tab_trends(result):
@@ -1119,7 +1119,7 @@ def render_tab_trends(result):
 
     if trend_df is not None and not trend_df.empty:
         fig = plot_lst_trend(trend_df, city_name)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="lst_trend_chart")
 
         # Year-over-year change
         yearly = trend_df.groupby('year')['lst_celsius'].mean()
