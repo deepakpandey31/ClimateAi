@@ -1,48 +1,56 @@
-# Urban Heat Mitigation AI — deployment requirements
-# Compatible with Python 3.11+ (see runtime.txt)
+# Urban Heat Mitigation AI
+# All pins use >= so pip can resolve correct wheels for any Python version.
+# This avoids "no matching distribution" errors on Python 3.12+/3.14+.
 
 # --- Web UI ---
-streamlit==1.35.0
-streamlit-folium==0.20.0
-folium==0.16.0
-branca==0.7.2
-plotly==5.22.0
+streamlit>=1.35.0
+streamlit-folium>=0.20.0
+folium>=0.16.0
+branca>=0.7.2
+plotly>=5.22.0
 
 # --- Geo stack ---
-geopandas==0.14.4
-shapely>=2.0.4
-osmnx>=1.9.4
-pyproj==3.6.1
+# geopandas 0.14.x caps at Python 3.12; 1.x+ supports 3.13/3.14
+geopandas>=0.14.4
+shapely>=2.0.0
+# osmnx 1.9.4 caps at Python <3.13; 2.x+ has no upper Python bound
+osmnx>=2.0.0
+pyproj>=3.6.1
 
-# --- Earth Engine (pure Python) ---
-earthengine-api==0.1.393
+# --- Earth Engine ---
+earthengine-api>=0.1.393
 
 # --- ML / Stats ---
-scikit-learn==1.4.2
-xgboost==2.0.3
-shap==0.45.1
-esda==2.5.1
-libpysal==4.10.0
+# scikit-learn 1.4.x caps at Python 3.12; 1.5+ supports 3.13/3.14
+scikit-learn>=1.5.0
+# xgboost 2.0.x caps at Python 3.12; 2.1+ supports 3.13/3.14
+xgboost>=2.1.0
+shap>=0.45.0
+esda>=2.5.1
+libpysal>=4.10.0
 
 # --- Optimisation ---
-pulp==2.8.0
+pulp>=2.8.0
 
 # --- Data ---
-numpy==1.26.4
-pandas==2.2.2
-pyarrow==14.0.2
-scipy==1.13.0
+# numpy 1.x caps at Python 3.12; 2.x supports 3.13/3.14
+numpy>=2.0.0
+pandas>=2.2.2
+# pyarrow 14.x caps at Python 3.12; 18+ supports 3.13/3.14
+pyarrow>=18.0.0
+# scipy 1.13.x caps at Python 3.12; 1.14+ supports 3.13/3.14
+scipy>=1.14.0
 
 # --- HTTP / geocoding ---
-requests==2.31.0
-geopy==2.4.1
+requests>=2.31.0
+geopy>=2.4.1
 
 # --- Caching ---
-diskcache==5.6.3
+diskcache>=5.6.3
 
 # --- Reporting ---
-reportlab==4.1.0
+reportlab>=4.1.0
 
 # --- Utilities ---
-python-dotenv==1.0.1
-matplotlib==3.9.0
+python-dotenv>=1.0.1
+matplotlib>=3.9.0
