@@ -58,9 +58,16 @@ def geocode_city(city_name: str) -> dict:
     Raises:
         ValueError if city cannot be resolved.
     """
-    ox.settings.log_console = False
-    ox.settings.use_cache = False  # we use our own cache layer
-    ox.settings.http_accept_language = "en"
+    # osmnx settings — set safely for both 1.x and 2.x compatibility
+    for _attr, _val in [
+        ('log_console', False),      # removed in osmnx 2.0
+        ('use_cache', False),         # removed in osmnx 2.0
+        ('http_accept_language', 'en'),  # still present in 2.x
+    ]:
+        try:
+            setattr(ox.settings, _attr, _val)
+        except AttributeError:
+            pass
 
     # Try with ", India" appended for precision
     queries_to_try = [

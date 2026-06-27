@@ -39,18 +39,29 @@ OVERPASS_ENDPOINTS = [
 
 USER_AGENT = "UrbanHeatMitigationAI/1.0 (ISRO-Hackathon)"
 
-# OSMnx configuration
-ox.settings.log_console = False
-ox.settings.use_cache = False
-ox.settings.timeout = 90
-ox.settings.overpass_endpoint = OVERPASS_ENDPOINTS[0]
+# OSMnx configuration — compatible with both osmnx 1.x and 2.x
+# osmnx 2.0 removed log_console, use_cache, and renamed timeout→requests_timeout
+def _safe_set_ox(attr, value):
+    """Set an osmnx setting safely, ignoring if removed in newer versions."""
+    try:
+        setattr(ox.settings, attr, value)
+    except AttributeError:
+        pass
+
+_safe_set_ox('log_console', False)       # removed in osmnx 2.0
+_safe_set_ox('use_cache', False)          # removed in osmnx 2.0
+_safe_set_ox('timeout', 90)               # osmnx 1.x
+_safe_set_ox('requests_timeout', 90)      # osmnx 2.x renamed
+_safe_set_ox('overpass_endpoint', OVERPASS_ENDPOINTS[0])  # 1.x
+_safe_set_ox('overpass_url', OVERPASS_ENDPOINTS[0])       # possible 2.x alias
 
 
 def _retry_with_mirrors(func, *args, **kwargs):
-    """Try a function, switching Overpass mirrors on timeout."""
+    """Try a function, switching Overpass mirrors on timeout. osmnx 1.x/2.x safe."""
     for i, endpoint in enumerate(OVERPASS_ENDPOINTS):
         try:
-            ox.settings.overpass_endpoint = endpoint
+            _safe_set_ox('overpass_endpoint', endpoint)  # osmnx 1.x
+            _safe_set_ox('overpass_url', endpoint)        # osmnx 2.x
             return func(*args, **kwargs)
         except Exception as e:
             logger.warning(f"Overpass endpoint {endpoint} failed: {e}")
