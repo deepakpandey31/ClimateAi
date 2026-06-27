@@ -168,7 +168,7 @@ def _update_progress(pct: int, msg: str):
 
 
 # ── Core Pipeline ─────────────────────────────────────────────────────────────
-def run_pipeline(city_name: str, force_refresh: bool = False):
+def run_pipeline(city_name: str, force_refresh: bool = False, fetch_osm: bool = False):
     """
     Full analysis pipeline. Runs in-thread (Streamlit reruns handle UI updates).
     All heavy compute is server-side in GEE; only small tables come back locally.
@@ -281,7 +281,7 @@ def run_pipeline(city_name: str, force_refresh: bool = False):
             with ThreadPoolExecutor(max_workers=2) as ex:
                 futures = {}
                 if osm_dfs is None or force_refresh:
-                    futures['osm'] = ex.submit(fetch_all_osm, boundary_gdf, grid_gdf)
+                    futures['osm'] = ex.submit(fetch_all_osm, boundary_gdf, grid_gdf, fetch_osm)
                 if weather is None or force_refresh:
                     futures['weather'] = ex.submit(_fetch_weather)
                 for key, fut in futures.items():
@@ -757,6 +757,12 @@ def render_sidebar():
             help="Ignore cache and re-fetch all data (slower but up-to-date)"
         )
 
+        fetch_osm = st.checkbox(
+            "Fetch OSM data (detailed/slow)",
+            value=False,
+            help="Downloads precise building footprints and road networks from OSM. Unchecked (default) is 10x faster using GEE morphology proxies."
+        )
+
         analyze_btn = st.button("🔬 Analyze City", type="primary", use_container_width=True)
 
         st.divider()
@@ -765,7 +771,7 @@ def render_sidebar():
         - 🛰️ Landsat 8/9 LST (GEE)
         - 🌍 ESA WorldCover LULC
         - 🌿 Sentinel-2 NDVI
-        - 🗺️ OpenStreetMap
+        - 🗺️ OpenStreetMap (Optional)
         - ☁️ Open-Meteo weather
         - ☀️ NASA POWER solar
         - 👥 GHSL Population
@@ -786,7 +792,7 @@ def render_sidebar():
             else:
                 st.warning("⚠️ GEE unavailable — using proxy LST")
 
-        return city_input, analyze_btn, force_refresh
+        return city_input, analyze_btn, force_refresh, fetch_osm
 
 
 # ── Tab Renderers ─────────────────────────────────────────────────────────────
@@ -1238,7 +1244,7 @@ def render_tab_report(result):
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     # Sidebar
-    city_input, analyze_btn, force_refresh = render_sidebar()
+    city_input, analyze_btn, force_refresh, fetch_osm = render_sidebar()
 
     # Hero header
     st.markdown(f"""
@@ -1255,6 +1261,7 @@ def main():
         state['progress'] = 0
         state['progress_msg'] = 'Starting...'
         state['city'] = city_input
+        state['fetch_osm'] = fetch_osm
         state['result'] = None
         state['error'] = None
         st.rerun()
@@ -1266,8 +1273,8 @@ def main():
         status_text = st.empty()
         status_text.info(f"⏳ {state['progress_msg'] or 'Initializing pipeline...'}")
 
-        with st.spinner("Running analysis pipeline (first run may take 3–8 minutes)..."):
-            run_pipeline(state['city'], force_refresh)
+        with st.spinner("Running analysis pipeline (takes less than a minute)..."):
+            run_pipeline(state['city'], force_refresh, state.get('fetch_osm', False))
             st.rerun()
         return
 
@@ -1309,6 +1316,7 @@ def main():
                 state['progress'] = 0
                 state['progress_msg'] = 'Starting...'
                 state['city'] = city
+                state['fetch_osm'] = False
                 state['result'] = None
                 state['error'] = None
                 st.rerun()

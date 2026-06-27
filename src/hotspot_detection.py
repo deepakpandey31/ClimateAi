@@ -101,8 +101,9 @@ def getis_ord_hotspots(
         # permutations=0 → analytical (asymptotic) p-values: INSTANT, no Monte Carlo
         gi = G_Local(gdf_valid[lst_col].values, w, star=True, permutations=0)
 
-        gdf_valid['gi_zscore'] = gi.z_sim
-        gdf_valid['gi_pvalue'] = gi.p_sim
+        # Use analytical (asymptotic) attributes z_norm/p_norm since permutations=0
+        gdf_valid['gi_zscore'] = gi.z_norm
+        gdf_valid['gi_pvalue'] = gi.p_norm
 
     except Exception as e:
         logger.error(f"Gi* calculation failed: {e}. Using z-score fallback.")

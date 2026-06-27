@@ -82,7 +82,7 @@ def fetch_buildings(
 
     Returns DataFrame: cell_id, building_density, building_count
     """
-    polygon = boundary_gdf.geometry.iloc[0]
+    polygon = boundary_gdf.geometry.iloc[0].simplify(0.002, preserve_topology=True)
 
     # Default empty result
     empty = pd.DataFrame({
@@ -149,7 +149,7 @@ def fetch_roads(
 
     Returns DataFrame: cell_id, road_density_m_per_km2
     """
-    polygon = boundary_gdf.geometry.iloc[0]
+    polygon = boundary_gdf.geometry.iloc[0].simplify(0.002, preserve_topology=True)
     empty = pd.DataFrame({
         'cell_id': grid_gdf['cell_id'],
         'road_density_m_per_km2': 0.0,
@@ -207,7 +207,7 @@ def fetch_landuse(
     Returns DataFrame: cell_id, industrial_frac, commercial_frac,
                        residential_frac, park_frac
     """
-    polygon = boundary_gdf.geometry.iloc[0]
+    polygon = boundary_gdf.geometry.iloc[0].simplify(0.002, preserve_topology=True)
 
     cols = ['cell_id', 'industrial_frac', 'commercial_frac', 'residential_frac', 'park_frac']
     empty = pd.DataFrame({c: 0.0 for c in cols}, index=grid_gdf.index)
@@ -295,7 +295,7 @@ def fetch_water_distance(
 
     Returns DataFrame: cell_id, dist_water_km
     """
-    polygon = boundary_gdf.geometry.iloc[0]
+    polygon = boundary_gdf.geometry.iloc[0].simplify(0.002, preserve_topology=True)
     empty = pd.DataFrame({
         'cell_id': grid_gdf['cell_id'],
         'dist_water_km': 5.0,  # default: 5 km away
@@ -353,6 +353,7 @@ def fetch_water_distance(
 def fetch_all_osm(
     boundary_gdf: gpd.GeoDataFrame,
     grid_gdf: gpd.GeoDataFrame,
+    fetch_osm: bool = True,
 ) -> Dict[str, pd.DataFrame]:
     """
     Fetch all OSM features in PARALLEL using ThreadPoolExecutor.
@@ -364,8 +365,6 @@ def fetch_all_osm(
     Returns dict of DataFrames keyed by feature type.
     Continues on individual failures — never crashes the whole pipeline.
     """
-    logger.info("Starting parallel OSM data fetch (buildings + roads + landuse + water simultaneously)...")
-
     default_results = {
         'buildings': pd.DataFrame({'cell_id': grid_gdf['cell_id'], 'building_density': 0.0, 'building_count': 0}),
         'roads':     pd.DataFrame({'cell_id': grid_gdf['cell_id'], 'road_density_m_per_km2': 0.0}),
@@ -374,6 +373,12 @@ def fetch_all_osm(
                                    'residential_frac': 0.0, 'park_frac': 0.0}),
         'water':     pd.DataFrame({'cell_id': grid_gdf['cell_id'], 'dist_water_km': 5.0}),
     }
+
+    if not fetch_osm:
+        logger.info("OSM fetch disabled: using dynamic GEE proxy estimation.")
+        return default_results
+
+    logger.info("Starting parallel OSM data fetch (buildings + roads + landuse + water simultaneously)...")
 
     tasks = {
         'buildings': lambda: fetch_buildings(boundary_gdf, grid_gdf),

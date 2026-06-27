@@ -253,12 +253,13 @@ def build_feature_table(
     else:
         base['park_frac'] = base['park_frac'].fillna((g * 0.40).clip(0, 1))
 
+    water_dist_est = pd.Series(np.where(w > 0.01, 0.1, 5.0), index=base.index)
     if 'dist_water_km' not in base.columns:
-        base['dist_water_km'] = np.where(w > 0.01, 0.1, 5.0)
+        base['dist_water_km'] = water_dist_est
     else:
-        base['dist_water_km'] = base['dist_water_km'].fillna(np.where(w > 0.01, 0.1, 5.0))
+        base['dist_water_km'] = base['dist_water_km'].fillna(water_dist_est)
         if (base['dist_water_km'] == 5.0).all():
-            base['dist_water_km'] = np.where(w > 0.01, 0.1, 5.0)
+            base['dist_water_km'] = water_dist_est
 
     # --- Fill remaining missing values with flat defaults ---
     default_fills = {

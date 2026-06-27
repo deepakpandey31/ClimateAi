@@ -14,11 +14,21 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Root cache directory — adjacent to project root
-CACHE_DIR = Path(__file__).parent.parent / "cache"
-CACHE_DIR.mkdir(exist_ok=True)
+# Root cache directory — use /tmp/climateai_cache on Linux (e.g. Streamlit Cloud) to avoid permission/read-only issues
+if os.name == 'posix':
+    CACHE_DIR = Path("/tmp/climateai_cache")
+else:
+    CACHE_DIR = Path(__file__).parent.parent / "cache"
 
-_cache = diskcache.Cache(str(CACHE_DIR), size_limit=2 * 1024 ** 3)  # 2 GB max
+try:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _cache = diskcache.Cache(str(CACHE_DIR), size_limit=2 * 1024 ** 3)  # 2 GB max
+except Exception as e:
+    # Fallback to temp directory of the OS if we cannot write to CACHE_DIR
+    import tempfile
+    CACHE_DIR = Path(tempfile.gettempdir()) / "climateai_cache"
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _cache = diskcache.Cache(str(CACHE_DIR), size_limit=2 * 1024 ** 3)
 
 
 def _make_key(city: str, date_str: str, data_type: str) -> str:
